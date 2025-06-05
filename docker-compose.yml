@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: bachelor_postgres
+    environment:
+      POSTGRES_DB: bachelor_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - bachelor_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bachelor_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Backend Go Application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bachelor_backend
+    environment:
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      DB_NAME: bachelor_db
+      
+      # Application Configuration
+      PORT: 8080
+      JWT_SECRET: your-secret-key-here-make-it-long-and-secure-for-production
+      
+      # ML Service Configuration
+      ML_SERVICE_URL: http://ml_service:8001
+      
+      # Environment
+      ENVIRONMENT: development
+      
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bachelor_network
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Machine Learning Service (Python/FastAPI)
+  ml_service:
+    build:
+      context: ./ml_service
+      dockerfile: Dockerfile
+    container_name: bachelor_ml_service
+    environment:
+      # Database Configuration (Same as backend for shared database access)
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      DB_NAME: bachelor_db
+      
+      # Python/ML Configuration
+      PYTHONPATH: /app
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+      
+      # ML Service Configuration
+      ML_SERVICE_HOST: 0.0.0.0
+      ML_SERVICE_PORT: 8001
+      
+      # Logging
+      LOG_LEVEL: INFO
+      
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bachelor_network
+    volumes:
+      - ./ml_service:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: >
+      sh -c "
+        echo 'Starting ML Service...' &&
+        echo 'Database Host: postgres' &&
+        echo 'Database Name: bachelor_db' &&
+        python -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+      "
+
+  # Database Administration (Optional - for development)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bachelor_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bachelor.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - bachelor_network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    profiles:
+      - dev  # Only start with --profile dev
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  bachelor_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

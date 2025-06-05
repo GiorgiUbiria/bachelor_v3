@@ -1,0 +1,95 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+/frontend/dist/
+/frontend/build/
+/backend/build/
+/ml_service/build/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Testing
+/coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Database
+*.sqlite
+*.db
+*.sql
+*.dump
+
+# ML specific
+*.h5
+*.pkl
+*.model
+*.joblib
+*.npy
+*.npz
+data/raw/
+data/processed/
+models/saved/
+
+# Issue #6: ML Guidance Directory (Personal Learning Materials)
+ml_guidance/
+
+# Misc
+.cache/
+.temp/
+.tmp/
+
+
+# Thesis
+thesis/

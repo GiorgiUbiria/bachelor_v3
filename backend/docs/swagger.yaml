@@ -1,0 +1,2708 @@
+basePath: /api/v1
+definitions:
+  handlers.AddFavoriteRequest:
+    properties:
+      product_id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+    required:
+    - product_id
+    type: object
+  handlers.AuthResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  handlers.CategoriesListResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.CategoryResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handlers.CategoryResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      product_count:
+        type: integer
+      products:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+    type: object
+  handlers.CommentResponse:
+    properties:
+      body:
+        type: string
+      comment_votes:
+        items:
+          $ref: '#/definitions/models.CommentVote'
+        type: array
+      created_at:
+        type: string
+      downvotes:
+        type: integer
+      id:
+        type: string
+      net_votes:
+        description: upvotes - downvotes
+        type: integer
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      sentiment_label:
+        type: string
+      sentiment_score:
+        type: number
+      upvotes:
+        type: integer
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+      user_vote:
+        description: '"up", "down", or null'
+        type: string
+    type: object
+  handlers.CommentsListResponse:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/handlers.CommentResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handlers.CreateCategoryRequest:
+    properties:
+      name:
+        example: Electronics
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  handlers.CreateCommentRequest:
+    properties:
+      body:
+        example: Great product! Highly recommended.
+        maxLength: 2000
+        minLength: 1
+        type: string
+      product_id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+    required:
+    - body
+    - product_id
+    type: object
+  handlers.CreateProductRequest:
+    properties:
+      category_id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      description:
+        example: Latest iPhone with advanced features
+        maxLength: 2000
+        type: string
+      name:
+        example: iPhone 15 Pro
+        maxLength: 255
+        minLength: 2
+        type: string
+      price:
+        example: 999.99
+        minimum: 0
+        type: number
+      tags:
+        example:
+        - '["smartphone"'
+        - ' "apple"'
+        - ' "premium"]'
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    type: object
+  handlers.CreateProductSuggestionRequest:
+    properties:
+      model_version:
+        example: v1.0
+        maxLength: 100
+        type: string
+      product_id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      reason:
+        example: Price optimization based on market analysis
+        maxLength: 500
+        type: string
+      suggested_price_max:
+        example: 199.99
+        minimum: 0
+        type: number
+      suggested_price_min:
+        example: 99.99
+        minimum: 0
+        type: number
+      suggested_tags:
+        example:
+        - '["smartphone"'
+        - ' "premium"'
+        - ' "latest"]'
+        items:
+          type: string
+        type: array
+    required:
+    - product_id
+    type: object
+  handlers.DealInfo:
+    properties:
+      deal_expiry:
+        type: string
+      deal_price:
+        type: number
+      deal_reason:
+        type: string
+      discount_percentage:
+        type: number
+      is_limited_time:
+        type: boolean
+      is_regional_deal:
+        type: boolean
+      original_price:
+        type: number
+    type: object
+  handlers.DealsSummary:
+    properties:
+      average_discount:
+        type: number
+      personalized_deals:
+        type: integer
+      regional_deals:
+        type: integer
+      total_deals:
+        type: integer
+      total_savings:
+        type: number
+    type: object
+  handlers.FavoriteResponse:
+    properties:
+      favorited_at:
+        type: string
+      id:
+        type: string
+      product:
+        $ref: '#/definitions/handlers.ProductResponse'
+      product_id:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+    type: object
+  handlers.FavoritesListResponse:
+    properties:
+      favorites:
+        items:
+          $ref: '#/definitions/handlers.FavoriteResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        maxLength: 255
+        type: string
+      password:
+        example: password123
+        maxLength: 128
+        minLength: 1
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.OnDemandProductSuggestionResponse:
+    properties:
+      analysis_summary:
+        type: string
+      confidence:
+        type: number
+      model_version:
+        type: string
+      processing_time:
+        type: string
+      recommended_tags:
+        items:
+          $ref: '#/definitions/handlers.RecommendedTag'
+        type: array
+      similar_products:
+        items:
+          $ref: '#/definitions/handlers.SimilarProductInfo'
+        type: array
+      suggested_price_range:
+        $ref: '#/definitions/handlers.SuggestedPriceRange'
+    type: object
+  handlers.ProductFilters:
+    properties:
+      category_id:
+        type: string
+      created_by:
+        type: string
+      max_price:
+        type: number
+      min_price:
+        type: number
+      search:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.ProductResponse:
+    description: Product response with enhanced information
+    properties:
+      average_rating:
+        type: number
+      category:
+        $ref: '#/definitions/models.Category'
+      category_id:
+        type: string
+      comment_count:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      comments_count:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: string
+      creator:
+        $ref: '#/definitions/models.User'
+      curated_price:
+        type: number
+      curated_tags:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      favorite_count:
+        description: Additional fields from products handler
+        type: integer
+      favorites:
+        items:
+          $ref: '#/definitions/models.Favorite'
+        type: array
+      favorites_count:
+        type: integer
+      feature_vector:
+        $ref: '#/definitions/models.ProductFeatureVector'
+      has_suggestions:
+        type: boolean
+      id:
+        type: string
+      is_favorited:
+        type: boolean
+      name:
+        type: string
+      price:
+        type: number
+      product_suggestions:
+        items:
+          $ref: '#/definitions/models.ProductSuggestion'
+        type: array
+      recommendations:
+        items:
+          $ref: '#/definitions/models.Recommendation'
+        type: array
+      recommended_reason:
+        type: string
+      similar_products:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+      similarity_data_as_product:
+        items:
+          $ref: '#/definitions/models.ProductSimilarityData'
+        type: array
+      similarity_data_as_similar:
+        items:
+          $ref: '#/definitions/models.ProductSimilarityData'
+        type: array
+      tags:
+        items:
+          type: string
+        type: array
+      user_events:
+        items:
+          $ref: '#/definitions/models.UserEvent'
+        type: array
+    type: object
+  handlers.ProductSearchRequest:
+    properties:
+      category_id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      limit:
+        example: 20
+        maximum: 100
+        minimum: 1
+        type: integer
+      max_price:
+        example: 1000
+        minimum: 0
+        type: number
+      min_price:
+        example: 100
+        minimum: 0
+        type: number
+      page:
+        example: 1
+        minimum: 1
+        type: integer
+      query:
+        example: smartphone
+        minLength: 1
+        type: string
+      sort_by:
+        enum:
+        - price
+        - created_at
+        example: price
+        type: string
+      sort_order:
+        enum:
+        - asc
+        - desc
+        example: asc
+        type: string
+      tags:
+        example:
+        - '["premium"'
+        - ' "bestseller"]'
+        items:
+          type: string
+        type: array
+    required:
+    - query
+    type: object
+  handlers.ProductSuggestionRequest:
+    properties:
+      brand:
+        example: Apple
+        maxLength: 100
+        type: string
+      category:
+        example: Electronics
+        maxLength: 100
+        type: string
+      description:
+        example: Latest flagship smartphone with advanced camera system and A17 Pro
+          chip
+        maxLength: 2000
+        minLength: 10
+        type: string
+      name:
+        example: iPhone 15 Pro Max
+        maxLength: 255
+        minLength: 2
+        type: string
+    required:
+    - description
+    - name
+    type: object
+  handlers.ProductSuggestionResponse:
+    properties:
+      generated_at:
+        type: string
+      id:
+        type: string
+      model_version:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      reason:
+        type: string
+      suggested_price_max:
+        type: number
+      suggested_price_min:
+        type: number
+      suggested_tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.ProductSuggestionsListResponse:
+    properties:
+      filters:
+        $ref: '#/definitions/handlers.SuggestionFilters'
+      limit:
+        type: integer
+      page:
+        type: integer
+      suggestions:
+        items:
+          $ref: '#/definitions/handlers.ProductSuggestionResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  handlers.ProductsListResponse:
+    properties:
+      filters:
+        $ref: '#/definitions/handlers.ProductFilters'
+      limit:
+        type: integer
+      page:
+        type: integer
+      products:
+        items:
+          $ref: '#/definitions/handlers.ProductResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  handlers.RecommendationRequest:
+    properties:
+      include_deals:
+        example: true
+        type: boolean
+      num_recommendations:
+        example: 10
+        maximum: 50
+        minimum: 1
+        type: integer
+      strategy:
+        enum:
+        - collaborative
+        - content
+        - demographic
+        - hybrid
+        example: hybrid
+        type: string
+    type: object
+  handlers.RecommendationResponse:
+    properties:
+      affinity_score:
+        type: number
+      age_based:
+        type: boolean
+      based_on_comments:
+        type: boolean
+      based_on_favorites:
+        type: boolean
+      created_at:
+        type: string
+      deal_info:
+        $ref: '#/definitions/handlers.DealInfo'
+      id:
+        type: string
+      model_version:
+        type: string
+      product:
+        $ref: '#/definitions/handlers.ProductResponse'
+      product_id:
+        type: string
+      reason:
+        type: string
+      reason_details:
+        items:
+          type: string
+        type: array
+      region_based:
+        type: boolean
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+    type: object
+  handlers.RecommendationsListResponse:
+    properties:
+      deals:
+        items:
+          $ref: '#/definitions/handlers.RecommendationResponse'
+        type: array
+      deals_summary:
+        $ref: '#/definitions/handlers.DealsSummary'
+      limit:
+        type: integer
+      page:
+        type: integer
+      recommendations:
+        items:
+          $ref: '#/definitions/handlers.RecommendationResponse'
+        type: array
+      strategy:
+        type: string
+      total:
+        type: integer
+      user_profile:
+        additionalProperties: true
+        type: object
+    type: object
+  handlers.RecommendedTag:
+    properties:
+      confidence:
+        type: number
+      reasoning:
+        type: string
+      tag:
+        type: string
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      birth_year:
+        example: 1990
+        maximum: 2024
+        minimum: 1900
+        type: integer
+      email:
+        example: user@example.com
+        maxLength: 255
+        type: string
+      name:
+        example: John Doe
+        maxLength: 100
+        minLength: 2
+        type: string
+      password:
+        example: password123
+        maxLength: 128
+        minLength: 8
+        type: string
+      region:
+        example: US
+        maxLength: 100
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.SimilarProductInfo:
+    properties:
+      category:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      product_id:
+        type: string
+      similarity_reason:
+        type: string
+      similarity_score:
+        type: number
+    type: object
+  handlers.StandardErrorResponse:
+    properties:
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  handlers.SuggestedPriceRange:
+    properties:
+      confidence:
+        type: number
+      max_price:
+        type: number
+      min_price:
+        type: number
+      reasoning:
+        type: string
+    type: object
+  handlers.SuggestionFilters:
+    properties:
+      has_price_max:
+        type: boolean
+      has_price_min:
+        type: boolean
+      has_tags:
+        type: boolean
+      model_version:
+        type: string
+      product_id:
+        type: string
+    type: object
+  handlers.UpdateCategoryRequest:
+    properties:
+      name:
+        example: Electronics
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  handlers.UpdateCommentRequest:
+    properties:
+      body:
+        example: Updated comment text
+        maxLength: 2000
+        minLength: 1
+        type: string
+    required:
+    - body
+    type: object
+  handlers.UpdateProductRequest:
+    properties:
+      category_id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      curated_price:
+        example: 899.99
+        minimum: 0
+        type: number
+      curated_tags:
+        example:
+        - '["smartphone"'
+        - ' "premium"'
+        - ' "bestseller"]'
+        items:
+          type: string
+        type: array
+      description:
+        example: Latest iPhone with advanced features
+        maxLength: 2000
+        type: string
+      name:
+        example: iPhone 15 Pro
+        maxLength: 255
+        minLength: 2
+        type: string
+      price:
+        example: 999.99
+        minimum: 0
+        type: number
+      tags:
+        example:
+        - '["smartphone"'
+        - ' "apple"'
+        - ' "premium"]'
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.UpdateProductSuggestionRequest:
+    properties:
+      model_version:
+        example: v1.0
+        maxLength: 100
+        type: string
+      reason:
+        example: Updated price optimization
+        maxLength: 500
+        type: string
+      suggested_price_max:
+        example: 199.99
+        minimum: 0
+        type: number
+      suggested_price_min:
+        example: 99.99
+        minimum: 0
+        type: number
+      suggested_tags:
+        example:
+        - '["smartphone"'
+        - ' "premium"'
+        - ' "latest"]'
+        items:
+          type: string
+        type: array
+    type: object
+  handlers.UpdateProfileRequest:
+    properties:
+      birth_year:
+        example: 1990
+        maximum: 2024
+        minimum: 1900
+        type: integer
+      name:
+        example: John Doe
+        maxLength: 100
+        minLength: 2
+        type: string
+      region:
+        example: US
+        maxLength: 100
+        type: string
+    type: object
+  handlers.UserProfileResponse:
+    properties:
+      birth_year:
+        type: integer
+      comment_votes:
+        items:
+          $ref: '#/definitions/models.CommentVote'
+        type: array
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      favorites:
+        items:
+          $ref: '#/definitions/models.Favorite'
+        type: array
+      http_request_logs:
+        items:
+          $ref: '#/definitions/models.HttpRequestLog'
+        type: array
+      id:
+        type: string
+      is_admin:
+        type: boolean
+      name:
+        type: string
+      recommendations:
+        items:
+          $ref: '#/definitions/models.Recommendation'
+        type: array
+      region:
+        type: string
+      statistics:
+        $ref: '#/definitions/handlers.UserProfileStatistics'
+      user_events:
+        items:
+          $ref: '#/definitions/models.UserEvent'
+        type: array
+    type: object
+  handlers.UserProfileStatistics:
+    properties:
+      average_order_value:
+        type: number
+      cart_items_count:
+        type: integer
+      cart_total_value:
+        type: number
+      favorite_category:
+        type: string
+      recommendations_clicked:
+        type: integer
+      recommendations_received:
+        type: integer
+      total_interactions:
+        type: integer
+      total_orders:
+        type: integer
+      total_spent:
+        type: number
+    type: object
+  handlers.VoteCommentRequest:
+    properties:
+      vote_type:
+        enum:
+        - up
+        - down
+        example: up
+        type: string
+    required:
+    - vote_type
+    type: object
+  models.Category:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+    type: object
+  models.Comment:
+    properties:
+      body:
+        type: string
+      comment_votes:
+        items:
+          $ref: '#/definitions/models.CommentVote'
+        type: array
+      created_at:
+        type: string
+      downvotes:
+        type: integer
+      id:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      sentiment_label:
+        type: string
+      sentiment_score:
+        type: number
+      upvotes:
+        type: integer
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+    type: object
+  models.CommentVote:
+    properties:
+      comment:
+        $ref: '#/definitions/models.Comment'
+      comment_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+      vote_type:
+        type: string
+    type: object
+  models.Favorite:
+    properties:
+      favorited_at:
+        type: string
+      id:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+    type: object
+  models.HttpRequestLog:
+    properties:
+      attack_score:
+        type: number
+      duration_ms:
+        type: integer
+      id:
+        type: string
+      ip_address:
+        type: string
+      method:
+        type: string
+      path:
+        type: string
+      referrer:
+        type: string
+      status_code:
+        type: integer
+      suspected_attack_type:
+        type: string
+      timestamp:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.Product:
+    properties:
+      category:
+        $ref: '#/definitions/models.Category'
+      category_id:
+        type: string
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      created_at:
+        type: string
+      created_by:
+        type: string
+      creator:
+        $ref: '#/definitions/models.User'
+      curated_price:
+        type: number
+      curated_tags:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      favorites:
+        items:
+          $ref: '#/definitions/models.Favorite'
+        type: array
+      feature_vector:
+        $ref: '#/definitions/models.ProductFeatureVector'
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      product_suggestions:
+        items:
+          $ref: '#/definitions/models.ProductSuggestion'
+        type: array
+      recommendations:
+        items:
+          $ref: '#/definitions/models.Recommendation'
+        type: array
+      similarity_data_as_product:
+        items:
+          $ref: '#/definitions/models.ProductSimilarityData'
+        type: array
+      similarity_data_as_similar:
+        items:
+          $ref: '#/definitions/models.ProductSimilarityData'
+        type: array
+      tags:
+        items:
+          type: string
+        type: array
+      user_events:
+        items:
+          $ref: '#/definitions/models.UserEvent'
+        type: array
+    type: object
+  models.ProductFeatureVector:
+    properties:
+      embedding:
+        items:
+          type: number
+        type: array
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.ProductSimilarityData:
+    properties:
+      based_on:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      similar_product:
+        $ref: '#/definitions/models.Product'
+      similar_product_id:
+        type: string
+      similarity_score:
+        type: number
+    type: object
+  models.ProductSuggestion:
+    properties:
+      generated_at:
+        type: string
+      id:
+        type: string
+      model_version:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      reason:
+        type: string
+      suggested_price_max:
+        type: number
+      suggested_price_min:
+        type: number
+      suggested_tags:
+        items:
+          type: string
+        type: array
+    type: object
+  models.Recommendation:
+    properties:
+      age_based:
+        type: boolean
+      based_on_comments:
+        type: boolean
+      based_on_favorites:
+        type: boolean
+      created_at:
+        type: string
+      id:
+        type: string
+      model_version:
+        type: string
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      reason:
+        type: string
+      region_based:
+        type: boolean
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+    type: object
+  models.User:
+    properties:
+      birth_year:
+        type: integer
+      comment_votes:
+        items:
+          $ref: '#/definitions/models.CommentVote'
+        type: array
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      favorites:
+        items:
+          $ref: '#/definitions/models.Favorite'
+        type: array
+      http_request_logs:
+        items:
+          $ref: '#/definitions/models.HttpRequestLog'
+        type: array
+      id:
+        type: string
+      is_admin:
+        type: boolean
+      name:
+        type: string
+      recommendations:
+        items:
+          $ref: '#/definitions/models.Recommendation'
+        type: array
+      region:
+        type: string
+      user_events:
+        items:
+          $ref: '#/definitions/models.UserEvent'
+        type: array
+    type: object
+  models.UserEvent:
+    properties:
+      event_type:
+        type: string
+      id:
+        type: string
+      metadata:
+        additionalProperties: true
+        type: object
+      product:
+        $ref: '#/definitions/models.Product'
+      product_id:
+        type: string
+      timestamp:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@bachelor-ecommerce.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: ML-Powered E-commerce Platform API with advanced recommendation system,
+    intelligent search, and comprehensive analytics
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Bachelor E-commerce API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: Invalid email or password
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: User login
+      tags:
+      - Authentication
+  /auth/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get the authenticated user's comprehensive profile information
+        including statistics and recent activity
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.UserProfileResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Authentication
+    put:
+      consumes:
+      - application/json
+      description: Update the authenticated user's profile information
+      parameters:
+      - description: Profile update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email, name, and password
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "409":
+          description: User with this email already exists
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Register a new user
+      tags:
+      - Authentication
+  /categories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of all categories with product counts
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Categories retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.CategoriesListResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get all categories
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      description: Create a new product category
+      parameters:
+      - description: Category creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Category created successfully
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "409":
+          description: Category with this name already exists
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new category
+      tags:
+      - Categories
+  /categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a category (only if it has no products)
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Category deleted successfully
+        "400":
+          description: Invalid category ID or category has products
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Category not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete category
+      tags:
+      - Categories
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific category with its product count
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.CategoryResponse'
+        "400":
+          description: Invalid category ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Category not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get category by ID
+      tags:
+      - Categories
+    put:
+      consumes:
+      - application/json
+      description: Update an existing category's information
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Category update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category updated successfully
+          schema:
+            $ref: '#/definitions/models.Category'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Category not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "409":
+          description: Category with this name already exists
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update category
+      tags:
+      - Categories
+  /comments:
+    post:
+      consumes:
+      - application/json
+      description: Create a new comment on a product
+      parameters:
+      - description: Comment creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Comment created successfully
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a comment
+      tags:
+      - Comments
+  /comments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a comment (only by the author or admin)
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Comment deleted successfully
+        "400":
+          description: Invalid comment ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: User not authorized to delete this comment
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Comment not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete comment
+      tags:
+      - Comments
+    put:
+      consumes:
+      - application/json
+      description: Update an existing comment (only by the author)
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Comment updated successfully
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: User not authorized to update this comment
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Comment not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update comment
+      tags:
+      - Comments
+  /comments/{id}/vote:
+    post:
+      consumes:
+      - application/json
+      description: Vote up or down on a comment
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vote data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.VoteCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vote recorded successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Comment not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "409":
+          description: User already voted on this comment
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Vote on comment
+      tags:
+      - Comments
+  /comments/my:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of comments by a specific user
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Comments retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.CommentsListResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user's comments
+      tags:
+      - Comments
+  /comments/product/{product_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated comments for a specific product with optional user
+        vote information
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - default: '"created_at"'
+        description: Sort by (created_at, upvotes, downvotes)
+        in: query
+        name: sort_by
+        type: string
+      - default: '"desc"'
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Comments retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.CommentsListResponse'
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get product comments
+      tags:
+      - Comments
+  /comments/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics about comments (for admin or analytics)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Comment statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get comment statistics
+      tags:
+      - Comments
+  /favorites:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of user's favorite products
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Favorites retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.FavoritesListResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user's favorites
+      tags:
+      - Favorites
+    post:
+      consumes:
+      - application/json
+      description: Add a product to the authenticated user's favorites
+      parameters:
+      - description: Product to add to favorites
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AddFavoriteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Product added to favorites successfully
+          schema:
+            $ref: '#/definitions/models.Favorite'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "409":
+          description: Product already in favorites
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add product to favorites
+      tags:
+      - Favorites
+  /favorites/{product_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a product from the authenticated user's favorites
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Product removed from favorites successfully
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Favorite not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove product from favorites
+      tags:
+      - Favorites
+  /favorites/{product_id}/check:
+    get:
+      consumes:
+      - application/json
+      description: Check if a specific product is in the authenticated user's favorites
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Favorite status
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Check if product is favorited
+      tags:
+      - Favorites
+  /favorites/{product_id}/toggle:
+    post:
+      consumes:
+      - application/json
+      description: Add or remove a product from favorites based on current status
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Toggle result
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Toggle favorite status
+      tags:
+      - Favorites
+  /favorites/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics about the authenticated user's favorites
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Favorite statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get favorite statistics
+      tags:
+      - Favorites
+  /product-suggestions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of ML-generated product suggestions with
+        optional filtering
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by product ID
+        in: query
+        name: product_id
+        type: string
+      - description: Filter by model version
+        in: query
+        name: model_version
+        type: string
+      - description: Filter suggestions with price minimum
+        in: query
+        name: has_price_min
+        type: boolean
+      - description: Filter suggestions with price maximum
+        in: query
+        name: has_price_max
+        type: boolean
+      - description: Filter suggestions with tags
+        in: query
+        name: has_tags
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Suggestions retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.ProductSuggestionsListResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get product suggestions
+      tags:
+      - Product Suggestions
+    post:
+      consumes:
+      - application/json
+      description: Create a new ML-generated suggestion for a product (admin only)
+      parameters:
+      - description: Suggestion creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateProductSuggestionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Suggestion created successfully
+          schema:
+            $ref: '#/definitions/models.ProductSuggestion'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: Admin access required
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create product suggestion
+      tags:
+      - Product Suggestions
+  /product-suggestions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an ML-generated product suggestion (admin only)
+      parameters:
+      - description: Suggestion ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Suggestion deleted successfully
+        "400":
+          description: Invalid suggestion ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: Admin access required
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Suggestion not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete product suggestion
+      tags:
+      - Product Suggestions
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific ML-generated product suggestion
+      parameters:
+      - description: Suggestion ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Suggestion retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.ProductSuggestionResponse'
+        "400":
+          description: Invalid suggestion ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Suggestion not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get product suggestion by ID
+      tags:
+      - Product Suggestions
+    put:
+      consumes:
+      - application/json
+      description: Update an existing ML-generated product suggestion (admin only)
+      parameters:
+      - description: Suggestion ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Suggestion update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateProductSuggestionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Suggestion updated successfully
+          schema:
+            $ref: '#/definitions/models.ProductSuggestion'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: Admin access required
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Suggestion not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update product suggestion
+      tags:
+      - Product Suggestions
+  /product-suggestions/generate/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Generate ML suggestions for a specific product using the ML service
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Suggestions generated successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: Admin access required
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate suggestions for product
+      tags:
+      - Product Suggestions
+  /product-suggestions/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics about ML-generated product suggestions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Suggestion statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get suggestion statistics
+      tags:
+      - Product Suggestions
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of products with optional filtering
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Search in name and description
+        in: query
+        name: search
+        type: string
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: string
+      - description: Minimum price filter
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum price filter
+        in: query
+        name: max_price
+        type: number
+      - description: Filter by tags (comma-separated)
+        in: query
+        name: tags
+        type: string
+      - description: Filter by creator user ID
+        in: query
+        name: created_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Products retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.ProductsListResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get products
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product
+      parameters:
+      - description: Product creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Product created successfully
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new product
+      tags:
+      - Products
+  /products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a product (only by creator or admin)
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Product deleted successfully
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: User not authorized to delete this product
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete product
+      tags:
+      - Products
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific product with detailed information
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.ProductResponse'
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get product by ID
+      tags:
+      - Products
+    put:
+      consumes:
+      - application/json
+      description: Update an existing product's information
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product updated successfully
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "403":
+          description: User not authorized to update this product
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update product
+      tags:
+      - Products
+  /products/search:
+    post:
+      consumes:
+      - application/json
+      description: Perform advanced search with multiple filters
+      parameters:
+      - description: Search parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ProductSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Search results
+          schema:
+            $ref: '#/definitions/handlers.ProductsListResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Search products
+      tags:
+      - Products
+  /products/suggest:
+    post:
+      consumes:
+      - application/json
+      description: Generate real-time product suggestions including price estimation,
+        tag recommendations, and similar products without storing in database
+      parameters:
+      - description: Product information for analysis
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ProductSuggestionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product suggestions generated successfully
+          schema:
+            $ref: '#/definitions/handlers.OnDemandProductSuggestionResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      summary: Get on-demand product suggestions
+      tags:
+      - Products
+  /recommendations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve personalized product recommendations for the authenticated
+        user with optional deal information
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - default: hybrid
+        description: Recommendation strategy
+        enum:
+        - collaborative
+        - content
+        - demographic
+        - hybrid
+        in: query
+        name: strategy
+        type: string
+      - default: false
+        description: Include personalized deals
+        in: query
+        name: include_deals
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recommendations retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.RecommendationsListResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user recommendations with deals
+      tags:
+      - Recommendations
+  /recommendations/generate:
+    post:
+      consumes:
+      - application/json
+      description: Generate fresh recommendations using the ML service with optional
+        deals
+      parameters:
+      - description: Recommendation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RecommendationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recommendations generated successfully
+          schema:
+            $ref: '#/definitions/handlers.RecommendationsListResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate new recommendations
+      tags:
+      - Recommendations
+  /recommendations/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics about user's recommendations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recommendation statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get recommendation statistics
+      tags:
+      - Recommendations
+  /recommendations/stored:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve previously generated recommendations from database
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by strategy
+        in: query
+        name: strategy
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Stored recommendations retrieved successfully
+          schema:
+            $ref: '#/definitions/handlers.RecommendationsListResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.StandardErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get stored recommendations
+      tags:
+      - Recommendations
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
+tags:
+- description: User authentication and profile management
+  name: Authentication
+- description: Product category management
+  name: Categories
+- description: Product management with advanced search and ML suggestions
+  name: Products
+- description: Product reviews and comments with voting system
+  name: Comments
+- description: User favorites management
+  name: Favorites
+- description: ML-powered personalized product recommendations
+  name: Recommendations
+- description: ML-generated product optimization suggestions
+  name: Product Suggestions

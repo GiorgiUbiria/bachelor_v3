@@ -1,0 +1,45 @@
+# FastAPI and Web Framework
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+python-dotenv==1.1.0
+
+# Database Connectivity
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+pandas==2.2.3
+
+# Machine Learning Libraries
+scikit-learn==1.5.2
+numpy==1.26.4
+scipy==1.15.3
+joblib==1.5.1
+
+# Text Processing and NLP
+nltk==3.9.1
+
+# Data Visualization and Analysis
+matplotlib==3.9.3
+seaborn==0.13.2
+
+# HTTP Requests
+httpx==0.28.1
+requests==2.32.3
+
+# Date and Time Handling
+python-dateutil==2.9.0.post0
+
+# Logging and Utilities
+rich==14.0.0
+click==8.2.1
+
+# Development and Debugging
+pydantic==2.10.3
+
+# Optional: Deep Learning (if needed)
+# tensorflow>=2.13.0
+# torch>=2.0.0
+
+# Optional: Advanced NLP (if needed)
+# transformers>=4.21.0
+# spacy>=3.4.0 
