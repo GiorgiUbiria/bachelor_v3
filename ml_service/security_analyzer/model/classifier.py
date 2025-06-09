@@ -17,6 +17,7 @@ from ..model.explainability import SecurityExplainer
 from ..database.logger import SecurityDatabaseLogger
 from ..utils.schema import SecurityAnalysisRequest, SecurityAnalysisResponse
 from ..utils.logger import setup_logger
+from ..pattern_matching.benign_detector import BenignDetector
 
 class SecurityAnalyzer:
     def __init__(self):
@@ -26,6 +27,7 @@ class SecurityAnalyzer:
         # Initialize components
         self.preprocessor = RequestPreprocessor()
         self.pattern_matcher = PatternMatcher()
+        self.benign_detector = BenignDetector()  # Add benign detector
         
         # Initialize enhanced classifier
         try:
@@ -186,34 +188,33 @@ class SecurityAnalyzer:
             pickle.dump(self.simple_classifier, f)
     
     def _calculate_attack_score(self, attack_type, confidence, pattern_matches):
-        """Calculate attack danger score"""
+        """Calculate attack danger score with improved scoring"""
         try:
             if attack_type == 'benign':
                 return 0.0
             
-            # Base scores by attack type
+            # Enhanced base scores for stronger detection
             base_scores = {
-                'sqli': 0.9,    # High danger
-                'xss': 0.7,     # Medium-high danger
-                'csrf': 0.6     # Medium danger
+                'xss': 0.75,      # Increased from 0.6
+                'sqli': 0.85,     # Increased from 0.7
+                'csrf': 0.65,     # Increased from 0.5
             }
             
-            base_score = base_scores.get(attack_type, 0.5)
+            base_score = base_scores.get(attack_type, 0.6)
             
-            # Adjust based on confidence
-            confidence_factor = confidence
+            # Boost score based on pattern matches
+            pattern_boost = min(0.2, len(pattern_matches) * 0.05)
             
-            # Adjust based on pattern matches
-            pattern_factor = min(1.0, 1.0 + (len(pattern_matches) * 0.1))
+            # Confidence multiplier
+            confidence_multiplier = max(0.8, confidence)
             
-            # Calculate final score
-            final_score = min(1.0, base_score * confidence_factor * pattern_factor)
+            final_score = min(0.95, (base_score + pattern_boost) * confidence_multiplier)
             
-            return float(final_score)
+            return final_score
             
         except Exception as e:
             self.logger.error(f"Attack score calculation failed: {e}")
-            return 0.5  # Default medium score
+            return 0.6
 
     def analyze(self, request):
         """Analyze a security request using ensemble approach"""
@@ -224,7 +225,20 @@ class SecurityAnalyzer:
             if hasattr(request, 'dict'):
                 request_dict = request.dict()
             else:
-                request_dict = request
+                request_dict = dict(request)
+            
+            # Quick benign check first - if clearly benign, skip expensive analysis
+            if self.benign_detector.is_benign(request_dict):
+                processing_time = (time.time() - start_time) * 1000
+                
+                return SecurityAnalysisResponse(
+                    is_malicious=False,
+                    attack_type="benign",
+                    attack_score=0.0,
+                    confidence=0.95,  # High confidence for clear benign patterns
+                    details={"reason": "Clear benign pattern detected"},
+                    processing_time_ms=processing_time
+                )
             
             # Preprocess the request
             preprocessed_text = self.preprocessor.preprocess(request_dict)
@@ -256,8 +270,8 @@ class SecurityAnalyzer:
                 self.logger.warning(f"ML prediction failed: {e}")
             
             # Ensemble decision
-            final_attack_type, final_confidence = self._ensemble_decision(
-                pattern_type, ml_pred, pattern_confidence, ml_confidence, pattern_matches
+            final_attack_type, final_confidence, final_attack_score = self._ensemble_decision(
+                ml_pred, ml_confidence, pattern_type, pattern_matches
             )
             
             # Calculate attack score
@@ -301,58 +315,53 @@ class SecurityAnalyzer:
             
         except Exception as e:
             self.logger.error(f"Analysis failed: {e}")
-            # Return safe fallback response
+            processing_time = (time.time() - start_time) * 1000
+            
             return SecurityAnalysisResponse(
                 is_malicious=False,
-                attack_type='benign',
+                attack_type="benign",
                 attack_score=0.0,
-                confidence=0.3,
-                details={'error': str(e)},
-                processing_time_ms=(time.time() - start_time) * 1000
+                confidence=0.5,
+                details={"error": str(e)},
+                processing_time_ms=processing_time
             )
     
-    def _ensemble_decision(self, pattern_pred, ml_pred, pattern_confidence, ml_confidence, pattern_matches):
-        """Make ensemble decision combining pattern matching and ML predictions"""
+    def _ensemble_decision(self, ml_prediction, ml_confidence, pattern_type, pattern_matches):
+        """Make ensemble decision with improved confidence handling"""
         try:
-            # CRITICAL FIX: Always trust pattern matching when it detects attacks
-            if pattern_pred != 'benign' and len(pattern_matches) > 0:
-                self.logger.info(f"Pattern matching detected {pattern_pred} with {len(pattern_matches)} matches - trusting pattern")
-                # High confidence when pattern matching detects something
-                final_confidence = min(0.95, pattern_confidence + 0.15)
-                return pattern_pred, final_confidence
+            # If benign detector already flagged as benign, trust it
+            if hasattr(self, '_benign_detected') and self._benign_detected:
+                return "benign", 0.0, 0.95
             
-            # If ML predicts attack with high confidence and no contradicting pattern
-            elif ml_pred != 'benign' and ml_confidence > 0.6:
-                self.logger.info(f"ML prediction: {ml_pred} with confidence {ml_confidence}")
-                final_confidence = ml_confidence * 0.9
-                return ml_pred, final_confidence
+            # Pattern matching takes precedence if confidence is high
+            if pattern_type != "benign" and len(pattern_matches) >= 2:
+                # High confidence for multiple pattern matches
+                confidence = min(0.95, 0.7 + (len(pattern_matches) * 0.1))
+                attack_score = self._calculate_attack_score(pattern_type, confidence, pattern_matches)
+                return pattern_type, attack_score, confidence
             
-            # If both say benign, combine confidences
-            elif pattern_pred == 'benign' and ml_pred == 'benign':
-                final_confidence = (pattern_confidence + ml_confidence) / 2
-                return 'benign', final_confidence
+            # Single pattern match - medium confidence
+            if pattern_type != "benign" and len(pattern_matches) == 1:
+                confidence = 0.75
+                attack_score = self._calculate_attack_score(pattern_type, confidence, pattern_matches)
+                return pattern_type, attack_score, confidence
             
-            # Default: prefer any attack detection over benign
-            elif pattern_pred != 'benign':
-                final_confidence = max(0.6, pattern_confidence * 0.8)
-                return pattern_pred, final_confidence
-            elif ml_pred != 'benign':
-                final_confidence = max(0.6, ml_confidence * 0.8)
-                return ml_pred, final_confidence
-            else:
-                # Both benign
-                final_confidence = (pattern_confidence + ml_confidence) / 2
-                return 'benign', final_confidence
+            # ML prediction with high confidence
+            if ml_prediction != "benign" and ml_confidence > 0.8:
+                attack_score = self._calculate_attack_score(ml_prediction, ml_confidence, [])
+                return ml_prediction, attack_score, ml_confidence
+            
+            # ML prediction with medium confidence - require higher threshold
+            if ml_prediction != "benign" and ml_confidence > 0.65:
+                attack_score = self._calculate_attack_score(ml_prediction, ml_confidence, [])
+                return ml_prediction, attack_score, ml_confidence * 0.9  # Slight confidence reduction
+            
+            # Default to benign if no strong indicators
+            return "benign", 0.0, 0.8
             
         except Exception as e:
-            self.logger.warning(f"Ensemble decision failed: {e}")
-            # CRITICAL: Prefer attack detection over benign in case of errors
-            if pattern_pred != 'benign':
-                return pattern_pred, max(0.5, pattern_confidence * 0.7)
-            elif ml_pred != 'benign':
-                return ml_pred, max(0.5, ml_confidence * 0.7)
-            else:
-                return 'benign', 0.3
+            self.logger.error(f"Ensemble decision failed: {e}")
+            return "benign", 0.0, 0.5
     
     def get_model_info(self) -> dict:
         info = {
