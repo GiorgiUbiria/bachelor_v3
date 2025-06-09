@@ -107,6 +107,14 @@ func AutoMigrate() error {
 		&models.HttpRequestLog{},
 		&models.UserEvent{},
 		&models.ProductFeatureVector{},
+		// Enhanced security models
+		&models.MLAnalysisLog{},
+		&models.SecurityMetrics{},
+		&models.SecurityFeedback{},
+		&models.AttackMitigation{},
+		&models.ModelPerformanceLog{},
+		&models.AblationStudyResults{},
+		&models.VisualizationData{},
 	}
 
 	var migrationErrors []error
@@ -118,6 +126,12 @@ func AutoMigrate() error {
 		log.Println("Successfully ensured uuid-ossp extension exists")
 	}
 
+	// Handle views that might depend on columns we're about to migrate
+	if err := handleDependentViews(); err != nil {
+		log.Printf("Warning: Failed to handle dependent views: %v", err)
+		migrationErrors = append(migrationErrors, fmt.Errorf("failed to handle dependent views: %w", err))
+	}
+
 	for _, model := range models {
 		if err := DB.AutoMigrate(model); err != nil {
 			log.Printf("Warning: Failed to migrate model %T: %v", model, err)
@@ -125,6 +139,12 @@ func AutoMigrate() error {
 		} else {
 			log.Printf("Successfully migrated model %T", model)
 		}
+	}
+
+	// Recreate views after migration
+	if err := createViews(); err != nil {
+		log.Printf("Warning: Failed to create views: %v", err)
+		migrationErrors = append(migrationErrors, fmt.Errorf("failed to create views: %w", err))
 	}
 
 	if err := createCustomIndexes(); err != nil {
@@ -146,6 +166,55 @@ func AutoMigrate() error {
 		log.Println("All migrations completed successfully")
 	}
 
+	return nil
+}
+
+func handleDependentViews() error {
+	// Check if ml_service_stats view exists and drop it temporarily
+	var viewExists bool
+	checkViewSQL := `
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.views 
+			WHERE table_name = 'ml_service_stats' AND table_schema = 'public'
+		)`
+	
+	if err := DB.Raw(checkViewSQL).Scan(&viewExists).Error; err != nil {
+		return fmt.Errorf("failed to check view existence: %w", err)
+	}
+
+	if viewExists {
+		log.Println("Temporarily dropping ml_service_stats view for migration")
+		if err := DB.Exec("DROP VIEW IF EXISTS ml_service_stats CASCADE").Error; err != nil {
+			return fmt.Errorf("failed to drop ml_service_stats view: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func createViews() error {
+	// Recreate the ml_service_stats view
+	createViewSQL := `
+		CREATE OR REPLACE VIEW ml_service_stats AS
+		SELECT 
+			DATE(timestamp) as analysis_date,
+			analysis_type,
+			model_version,
+			COUNT(*) as total_analyses,
+			AVG(processing_time_ms) as avg_processing_time_ms,
+			COUNT(CASE WHEN processing_time_ms > 1000 THEN 1 END) as slow_analyses,
+			MAX(processing_time_ms) as max_processing_time_ms,
+			MIN(processing_time_ms) as min_processing_time_ms
+		FROM ml_analysis_logs 
+		WHERE timestamp >= CURRENT_DATE - INTERVAL '30 days'
+		GROUP BY DATE(timestamp), analysis_type, model_version
+		ORDER BY analysis_date DESC, analysis_type, model_version`
+
+	if err := DB.Exec(createViewSQL).Error; err != nil {
+		return fmt.Errorf("failed to create ml_service_stats view: %w", err)
+	}
+
+	log.Println("Successfully created ml_service_stats view")
 	return nil
 }
 
@@ -252,13 +321,6 @@ func createUniqueConstraints() error {
 
 func GetDB() *gorm.DB {
 	return DB
-}
-
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
 }
 
 func getEnvInt(key string, fallback int) int {

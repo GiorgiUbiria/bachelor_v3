@@ -1,22 +1,14 @@
-"""
-Security Analyzer Package
+import logging
 
-A comprehensive, production-ready HTTP request security analysis system 
-that uses multi-layered machine learning techniques to detect and classify 
-malicious requests in real-time.
+logger = logging.getLogger(__name__)
 
-Modules:
-- core: Main SecurityAnalyzer implementation
-- tests: Comprehensive test suite  
-- evaluation: Performance evaluation and analysis tools
-- visualizations: Chart and plot generation
-- models: Saved model files and persistence
-- data: Test data and analysis results
-"""
-
-from .core.security_analyzer import SecurityAnalyzer
+try:
+    from .routes import router
+    ROUTES_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Security analyzer routes not available: {e}")
+    ROUTES_AVAILABLE = False
+    router = None
 
 __version__ = "1.0.0"
-__author__ = "Security Analysis Team"
-
-__all__ = ["SecurityAnalyzer"] 
+__all__ = ['router'] if ROUTES_AVAILABLE else [] 

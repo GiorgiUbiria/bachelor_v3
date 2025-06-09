@@ -1,0 +1,361 @@
+name: ML Service CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Code Quality and Security Checks
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort bandit safety
+        pip install -r requirements.txt
+    
+    - name: Code formatting check
+      run: |
+        black --check --diff .
+        isort --check-only --diff .
+    
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Security check with bandit
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . --severity-level medium
+    
+    - name: Check for known security vulnerabilities
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  # Unit and Integration Tests
+  test:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-asyncio httpx
+        pip install -r requirements.txt
+    
+    - name: Set up test database
+      run: |
+        # Create test database configuration
+        export DATABASE_URL="sqlite:///test.db"
+        python -c "from database import db_connection; print('Database setup complete')"
+    
+    - name: Run unit tests
+      run: |
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+      env:
+        PYTHONPATH: .
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # ML Model Testing and Validation
+  ml-validation:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Train and validate security analyzer
+      run: |
+        python -c "
+        from security_analyzer.core.security_analyzer import SecurityAnalyzer
+        analyzer = SecurityAnalyzer()
+        analyzer.train(use_synthetic_data=True)
+        print('✅ Security analyzer training completed')
+        
+        # Basic validation
+        test_request = {
+            'path': '/test',
+            'method': 'GET',
+            'user_agent': 'test',
+            'ip_address': '127.0.0.1',
+            'headers': {},
+            'body': '',
+            'query_params': {}
+        }
+        result = analyzer.analyze_request(test_request)
+        assert 'attack_score' in result
+        assert 'suspected_attack_type' in result
+        print('✅ Security analyzer validation passed')
+        "
+    
+    - name: Run comprehensive ML evaluation
+      run: |
+        python run_tests.py
+      timeout-minutes: 30
+    
+    - name: Upload ML evaluation results
+      uses: actions/upload-artifact@v3
+      with:
+        name: ml-evaluation-results
+        path: evaluation_results/
+
+  # Performance and Load Testing
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: ml-validation
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust
+    
+    - name: Start ML service
+      run: |
+        python main.py &
+        sleep 30  # Wait for service to start
+        curl -f http://localhost:8000/health || exit 1
+      env:
+        PYTHONPATH: .
+    
+    - name: Run load tests
+      run: |
+        # Create locust test file
+        cat > locustfile.py << 'EOF'
+        from locust import HttpUser, task, between
+        import json
+        
+        class SecurityAnalyzerUser(HttpUser):
+            wait_time = between(1, 3)
+            
+            @task(3)
+            def analyze_normal_request(self):
+                self.client.post("/security/analyze", json={
+                    "path": "/login",
+                    "method": "POST",
+                    "user_agent": "Mozilla/5.0",
+                    "ip_address": "192.168.1.100",
+                    "headers": {"Content-Type": "application/json"},
+                    "body": '{"username": "user", "password": "pass"}'
+                })
+            
+            @task(1)
+            def analyze_attack_request(self):
+                self.client.post("/security/analyze", json={
+                    "path": "/search?q=<script>alert('xss')</script>",
+                    "method": "GET",
+                    "user_agent": "Mozilla/5.0",
+                    "ip_address": "203.0.113.42",
+                    "headers": {},
+                    "body": ""
+                })
+            
+            @task(1)
+            def health_check(self):
+                self.client.get("/health")
+        EOF
+        
+        # Run load test
+        locust -f locustfile.py --host=http://localhost:8000 \
+               --users 10 --spawn-rate 2 --run-time 2m --html performance-report.html
+    
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: performance-report.html
+
+  # Security Scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Docker Build and Push
+  docker:
+    runs-on: ubuntu-latest
+    needs: [test, ml-validation]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ secrets.DOCKER_USERNAME }}/ml-security-service
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Model Deployment and Monitoring
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [docker, performance-test]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your deployment commands here
+        # Example: kubectl apply -f k8s/staging/
+    
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests..."
+        # Add smoke test commands here
+        # curl -f https://staging.yourapp.com/health
+    
+    - name: Deploy to production
+      if: success()
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment commands here
+        # Example: kubectl apply -f k8s/production/
+
+  # Model Performance Monitoring
+  monitor:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up monitoring
+      run: |
+        echo "Setting up model performance monitoring..."
+        # Add monitoring setup commands here
+    
+    - name: Check model drift
+      run: |
+        echo "Checking for model drift..."
+        # Add model drift detection commands here
+    
+    - name: Generate monitoring report
+      run: |
+        echo "Generating monitoring report..."
+        # Add monitoring report generation here
+
+  # Notification
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy, monitor]
+    if: always()
+    steps:
+    - name: Notify deployment status
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#ml-deployments'
+        text: |
+          ML Security Service deployment ${{ job.status }}!
+          Branch: ${{ github.ref }}
+          Commit: ${{ github.sha }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: env.SLACK_WEBHOOK_URL != null 

@@ -136,20 +136,32 @@ type ProductSimilarityData struct {
 }
 
 type HttpRequestLog struct {
-	ID                  uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	UserID              *uuid.UUID `json:"user_id" gorm:"type:uuid"`
-	IPAddress           *string    `json:"ip_address"`
-	UserAgent           *string    `json:"user_agent"`
-	Path                *string    `json:"path"`
-	Method              *string    `json:"method"`
-	Timestamp           time.Time  `json:"timestamp" gorm:"default:CURRENT_TIMESTAMP"`
-	DurationMs          *int       `json:"duration_ms"`
-	StatusCode          *int       `json:"status_code"`
-	Referrer            *string    `json:"referrer"`
-	SuspectedAttackType *string    `json:"suspected_attack_type" gorm:"check:suspected_attack_type IN ('xss', 'csrf', 'sqli', 'unknown')"`
-	AttackScore         *float64   `json:"attack_score"`
+	ID                  uuid.UUID              `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	UserID              *uuid.UUID             `json:"user_id" gorm:"type:uuid"`
+	IPAddress           *string                `json:"ip_address"`
+	UserAgent           *string                `json:"user_agent"`
+	Path                *string                `json:"path"`
+	Method              *string                `json:"method"`
+	Timestamp           time.Time              `json:"timestamp" gorm:"default:CURRENT_TIMESTAMP"`
+	DurationMs          *int                   `json:"duration_ms"`
+	StatusCode          *int                   `json:"status_code"`
+	Referrer            *string                `json:"referrer"`
+	SuspectedAttackType *string                `json:"suspected_attack_type" gorm:"check:suspected_attack_type IN ('xss', 'csrf', 'sqli', 'benign', 'unknown')"`
+	AttackScore         *float64               `json:"attack_score"`
+	// Enhanced security fields
+	QueryParams     *string                `json:"query_params"`
+	Headers         map[string]interface{} `json:"headers" gorm:"type:jsonb"`
+	Body            map[string]interface{} `json:"body" gorm:"type:jsonb"`
+	Cookies         map[string]interface{} `json:"cookies" gorm:"type:jsonb"`
+	ConfidenceScore *float64               `json:"confidence_score"`
+	IsMalicious     bool                   `json:"is_malicious" gorm:"default:false"`
+	PatternMatches  map[string]interface{} `json:"pattern_matches" gorm:"type:jsonb"`
+	MLPrediction    *string                `json:"ml_prediction"`
+	EnsembleWeights map[string]interface{} `json:"ensemble_weights" gorm:"type:jsonb"`
 
-	User *User `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	User           *User            `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	MLAnalysisLogs []MLAnalysisLog  `json:"ml_analysis_logs,omitempty" gorm:"foreignKey:RequestLogID"`
+	SecurityFeedback []SecurityFeedback `json:"security_feedback,omitempty" gorm:"foreignKey:RequestLogID"`
 }
 
 type UserEvent struct {
@@ -170,6 +182,102 @@ type ProductFeatureVector struct {
 	UpdatedAt time.Time       `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
 
 	Product Product `json:"product" gorm:"foreignKey:ProductID"`
+}
+
+// New enhanced security models
+
+type MLAnalysisLog struct {
+	ID                uuid.UUID              `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	RequestLogID      *uuid.UUID             `json:"request_log_id" gorm:"type:uuid"`
+	AnalysisType      string                 `json:"analysis_type" gorm:"not null"`
+	ModelVersion      string                 `json:"model_version" gorm:"default:'2.0'"`
+	InputFeatures     map[string]interface{} `json:"input_features" gorm:"type:jsonb"`
+	MLProbabilities   map[string]interface{} `json:"ml_probabilities" gorm:"type:jsonb"`
+	PatternResults    map[string]interface{} `json:"pattern_results" gorm:"type:jsonb"`
+	EnsembleDecision  map[string]interface{} `json:"ensemble_decision" gorm:"type:jsonb"`
+	FeatureImportance map[string]interface{} `json:"feature_importance" gorm:"type:jsonb"`
+	ExplanationData   map[string]interface{} `json:"explanation_data" gorm:"type:jsonb"`
+	ProcessingTimeMs  *int                   `json:"processing_time_ms"`
+	Timestamp         time.Time              `json:"timestamp" gorm:"default:CURRENT_TIMESTAMP"`
+
+	HttpRequestLog *HttpRequestLog `json:"http_request_log,omitempty" gorm:"foreignKey:RequestLogID"`
+}
+
+type SecurityMetrics struct {
+	ID                     uuid.UUID              `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	Date                   time.Time              `json:"date" gorm:"type:date;default:CURRENT_DATE;uniqueIndex"`
+	TotalRequests          int                    `json:"total_requests" gorm:"default:0"`
+	MaliciousRequests      int                    `json:"malicious_requests" gorm:"default:0"`
+	AttackTypeCounts       map[string]interface{} `json:"attack_type_counts" gorm:"type:jsonb"`
+	FalsePositiveRate      *float64               `json:"false_positive_rate"`
+	FalseNegativeRate      *float64               `json:"false_negative_rate"`
+	AverageConfidence      *float64               `json:"average_confidence"`
+	AverageProcessingTime  *float64               `json:"average_processing_time"`
+	ModelAccuracy          *float64               `json:"model_accuracy"`
+	TopAttackSources       map[string]interface{} `json:"top_attack_sources" gorm:"type:jsonb"`
+	TopAttackPaths         map[string]interface{} `json:"top_attack_paths" gorm:"type:jsonb"`
+}
+
+type SecurityFeedback struct {
+	ID                   uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	RequestLogID         uuid.UUID `json:"request_log_id" gorm:"type:uuid;not null"`
+	FeedbackType         string    `json:"feedback_type" gorm:"check:feedback_type IN ('false_positive', 'false_negative', 'correct', 'unknown')"`
+	OriginalPrediction   *string   `json:"original_prediction"`
+	CorrectedLabel       *string   `json:"corrected_label"`
+	FeedbackSource       *string   `json:"feedback_source"`
+	FeedbackReason       *string   `json:"feedback_reason"`
+	ConfidenceInFeedback float64   `json:"confidence_in_feedback" gorm:"default:1.0"`
+	CreatedAt            time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedBy            *uuid.UUID `json:"created_by" gorm:"type:uuid"`
+
+	HttpRequestLog *HttpRequestLog `json:"http_request_log" gorm:"foreignKey:RequestLogID"`
+	Creator        *User           `json:"creator,omitempty" gorm:"foreignKey:CreatedBy"`
+}
+
+type AttackMitigation struct {
+	ID                  uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	AttackType          string    `json:"attack_type" gorm:"not null"`
+	AttackPattern       *string   `json:"attack_pattern"`
+	MitigationStrategy  string    `json:"mitigation_strategy" gorm:"not null"`
+	SanitizationCode    *string   `json:"sanitization_code"`
+	PreventionTips      *string   `json:"prevention_tips"`
+	SeverityLevel       string    `json:"severity_level" gorm:"check:severity_level IN ('low', 'medium', 'high', 'critical')"`
+	CreatedAt           time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt           time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP"`
+}
+
+type ModelPerformanceLog struct {
+	ID                  uuid.UUID              `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	ModelVersion        *string                `json:"model_version"`
+	EvaluationType      *string                `json:"evaluation_type"`
+	EvaluationData      map[string]interface{} `json:"evaluation_data" gorm:"type:jsonb"`
+	Accuracy            *float64               `json:"accuracy"`
+	PrecisionMacro      *float64               `json:"precision_macro"`
+	RecallMacro         *float64               `json:"recall_macro"`
+	F1Macro             *float64               `json:"f1_macro"`
+	RocAuc              *float64               `json:"roc_auc"`
+	EvaluationTimestamp time.Time              `json:"evaluation_timestamp" gorm:"default:CURRENT_TIMESTAMP"`
+}
+
+type AblationStudyResults struct {
+	ID                 uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	StudyName          *string   `json:"study_name"`
+	ComponentRemoved   *string   `json:"component_removed"`
+	BaselineAccuracy   *float64  `json:"baseline_accuracy"`
+	ReducedAccuracy    *float64  `json:"reduced_accuracy"`
+	PerformanceImpact  *float64  `json:"performance_impact"`
+	ComponentImportance *float64  `json:"component_importance"`
+	TestSamples        *int      `json:"test_samples"`
+	StudyTimestamp     time.Time `json:"study_timestamp" gorm:"default:CURRENT_TIMESTAMP"`
+}
+
+type VisualizationData struct {
+	ID                 uuid.UUID              `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
+	VisualizationType  string                 `json:"visualization_type" gorm:"check:visualization_type IN ('tsne', 'umap', 'pca')"`
+	DataPoints         map[string]interface{} `json:"data_points" gorm:"type:jsonb"`
+	Parameters         map[string]interface{} `json:"parameters" gorm:"type:jsonb"`
+	DatasetInfo        map[string]interface{} `json:"dataset_info" gorm:"type:jsonb"`
+	CreatedAt          time.Time              `json:"created_at" gorm:"default:CURRENT_TIMESTAMP"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -245,6 +353,56 @@ func (hrl *HttpRequestLog) BeforeCreate(tx *gorm.DB) error {
 func (ue *UserEvent) BeforeCreate(tx *gorm.DB) error {
 	if ue.ID == uuid.Nil {
 		ue.ID = uuid.New()
+	}
+	return nil
+}
+
+// Add BeforeCreate hooks for new models
+func (ml *MLAnalysisLog) BeforeCreate(tx *gorm.DB) error {
+	if ml.ID == uuid.Nil {
+		ml.ID = uuid.New()
+	}
+	return nil
+}
+
+func (sm *SecurityMetrics) BeforeCreate(tx *gorm.DB) error {
+	if sm.ID == uuid.Nil {
+		sm.ID = uuid.New()
+	}
+	return nil
+}
+
+func (sf *SecurityFeedback) BeforeCreate(tx *gorm.DB) error {
+	if sf.ID == uuid.Nil {
+		sf.ID = uuid.New()
+	}
+	return nil
+}
+
+func (am *AttackMitigation) BeforeCreate(tx *gorm.DB) error {
+	if am.ID == uuid.Nil {
+		am.ID = uuid.New()
+	}
+	return nil
+}
+
+func (mpl *ModelPerformanceLog) BeforeCreate(tx *gorm.DB) error {
+	if mpl.ID == uuid.Nil {
+		mpl.ID = uuid.New()
+	}
+	return nil
+}
+
+func (asr *AblationStudyResults) BeforeCreate(tx *gorm.DB) error {
+	if asr.ID == uuid.Nil {
+		asr.ID = uuid.New()
+	}
+	return nil
+}
+
+func (vd *VisualizationData) BeforeCreate(tx *gorm.DB) error {
+	if vd.ID == uuid.Nil {
+		vd.ID = uuid.New()
 	}
 	return nil
 }
